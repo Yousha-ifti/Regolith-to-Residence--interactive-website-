@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regolith to Residences: The Engineering of Lunar Colonization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Lunar Neutrals (Warm grays, soft beige, with a subtle slate blue accent) with a dreamy lunar landscape header. -->
+    <!-- Application Structure Plan: The application is structured as a narrative journey in six main thematic sections: 1) The Challenge (environmental hurdles), 2) The Resource (geotechnical analysis of regolith), 3) The Solution (ISRU construction and robotics), 4) The Habitat (structural design), 5) Current Missions, and 6) Your Path to the Moon. This problem-to-solution flow, culminating in real-world efforts and individual opportunities, is intuitive for a general audience. A persistent top navigation bar allows users to jump between these themes. Interactivity is focused on clickable "portals" for detailed information, with the regolith strength chart now embedded within its relevant portal for context. New LLM features will explain multidisciplinary aspects of challenges and ISRU processes. -->
+    <!-- Visualization & Content Choices: 
+        - Environmental Hurdles: Goal is to inform. Presented as interactive, clickable "portals" with initial context and expandable details, now stacked vertically.
+        - Multidisciplinary Challenge Insights (LLM): Goal is to explain multidisciplinary work. Dropdown and button trigger AI to describe how various disciplines address a chosen challenge, with improved formatting (bold discipline names first, then concise description, no asterisks).
+        - Regolith Excavation: Goal is to show change. The interactive bar chart (Chart.js) visualizing how regolith strength changes with water-ice content is now embedded directly within the "Icy Regolith Strength" portal, visible upon expansion.
+        - Construction Materials: Goal is to compare. A tabbed interface allows users to compare different materials side-by-side with simple bar visualizations for compressive strength.
+        - ISRU Process Deep Dive (LLM): Goal is to explain multidisciplinary work. Dropdown and button trigger AI to detail steps and disciplines for chosen ISRU method, with improved formatting (numbered steps, bold discipline names, clear paragraphs).
+        - Habitat Shielding: Goal is to organize/inform. A layered diagram built with HTML/CSS visually explains the concept of regolith overburden for protection. Key structural concepts are presented as clickable "portals."
+        - Current Missions: Goal is to inform and categorize. Presented as interactive, clickable "portals," with enhanced internal formatting for readability, detailing major entities' lunar colonization ventures.
+        - Your Path to the Moon: Goal is to inform about local involvement. Presented as interactive, clickable "portals" detailing Bangladesh's contributions and opportunities in space, with no asterisks in subsections.
+        - All interactions are designed to reveal details on demand, reducing initial cognitive load and encouraging exploration.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f5; /* Zinc 100 */
+            color: #27272a; /* Zinc 800 */
+        }
+        .header-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('http://googleusercontent.com/file_content/2'); /* User-provided image */
+            background-size: cover;
+            background-position: center;
+            color: #fafafa; /* Zinc 50 */
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-item.active {
+            color: #3b82f6; /* Blue 500 */
+            border-bottom-color: #3b82f6;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #3f3f46; /* Zinc 700 */
+            color: #fafafa; /* Zinc 50 */
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .portal-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .portal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #3b82f6; /* Blue 500 */
+        }
+        .portal-summary {
+            transition: opacity 0.3s ease;
+        }
+        .portal-detail {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+        }
+        .portal-detail.active {
+            max-height: 800px; /* Adjusted to accommodate the chart more fully */
+            opacity: 1;
+        }
+        .portal-toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        .portal-toggle-icon.rotated {
+            transform: rotate(180deg);
+        }
+        .insight-text {
+            margin-bottom: 0.5rem; /* Spacing between points */
+            line-height: 1.5; /* Improve readability */
+        }
+        .step-heading {
+            font-weight: bold;
+            font-size: 1.125rem; /* text-lg */
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="header-bg shadow-lg p-6 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-2">Regolith to Residences</h1>
+        <p class="text-lg text-zinc-300 max-w-3xl mx-auto">An Interactive Guide to the Engineering of Lunar Colonization</p>
+    </header>
+
+    <nav class="bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-center items-center space-x-4 md:space-x-8 text-sm md:text-base">
+                <button id="nav-challenge" class="nav-item py-4 px-2 md:px-4 font-semibold text-zinc-600 hover:text-blue-500">1. The Challenge</button>
+                <button id="nav-resource" class="nav-item py-4 px-2 md:px-4 font-semibold text-zinc-600 hover:text-blue-500">2. The Resource</button>
+                <button id="nav-solution" class="nav-item py-4 px-2 md:px-4 font-semibold text-zinc-600 hover:text-blue-500">3. The Solution</button>
+                <button id="nav-habitat" class="nav-item py-4 px-2 md:px-4 font-semibold text-zinc-600 hover:text-blue-500">4. The Habitat</button>
+                <button id="nav-missions" class="nav-item py-4 px-2 md:px-4 font-semibold text-zinc-600 hover:text-blue-500">5. Current Missions</button>
+                <button id="nav-path" class="nav-item py-4 px-2 md:px-4 font-semibold text-zinc-600 hover:text-blue-500">6. Your Path to the Moon</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <!-- Section 1: The Challenge -->
+        <section id="section-challenge" class="content-section">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="text-3xl font-bold text-zinc-800 mb-2">What Challenges Await</h2>
+                <p class="max-w-3xl mx-auto text-zinc-600">Building a home on the Moon means overcoming a series of extreme environmental hurdles. Each hazard demands robust, multidisciplinary engineering solutions to ensure human survival and the integrity of our structures. Click on each portal to learn more.</p>
+            </div>
+            <div class="flex flex-col space-y-6 fade-in"> <!-- Changed to flex-col for vertical stacking -->
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">🌡️</div>
+                        <h3 class="text-xl font-semibold">Extreme Temperatures</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Swinging from a scorching 127°C in sunlight to a frigid -180°C in shadow, these thermal cycles stress materials to their limits...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>The lunar environment experiences dramatic and rapid thermal cycles, imposing significant stresses on materials, leading to concerns about long-term degradation, fatigue, and the overall integrity of structures and equipment. This necessitates advanced insulation and thermal control systems.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">☢️</div>
+                        <h3 class="text-xl font-semibold">Ionizing Radiation</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Without a thick atmosphere or magnetic field, the Moon is bombarded by Galactic Cosmic Rays and Solar Particle Events...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>The lunar surface is constantly bombarded by high-energy ionizing radiation from Galactic Cosmic Rays (GCRs) and Solar Particle Events (SPEs). Effective shielding, often provided by thick layers of regolith or integrated materials like polyethylene and water, is paramount to mitigate severe health hazards for astronauts.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">☄️</div>
+                        <h3 class="text-xl font-semibold">Micrometeoroids</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Tiny particles traveling at hyper-velocities constantly impact the surface, posing a continuous threat of penetration...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>In the absence of an atmosphere, micrometeoroids strike the lunar surface at hypervelocities, posing a significant threat of penetration and damage to habitats and equipment. Structural designs must account for these impacts, often utilizing regolith overburden or multi-layer fabric barriers.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">💨</div>
+                        <h3 class="text-xl font-semibold">Abrasive Lunar Dust</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Fine, sharp, and electrostatically charged dust clings to everything. It wears down seals, clogs mechanisms...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>Lunar dust is a pervasive and insidious hazard. It is electrostatically charged, highly abrasive, and poses a carcinogenic hazard. Robust dust mitigation strategies are essential for all aspects of lunar operations and habitat design to prevent wear on mechanical components, optical obscuration, and seal contamination.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">🌌</div>
+                        <h3 class="text-xl font-semibold">Hard Vacuum</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">The near-perfect vacuum requires all habitats to be pressurized, creating significant outward force on their shells...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>The lunar surface exists in a near-perfect vacuum, which impacts material outgassing, heat transfer, and necessitates that all human habitats be internally pressurized. This creates substantial outward forces on structural shells, requiring airtight and robust designs.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">🌕</div>
+                        <h3 class="text-xl font-semibold">Low Gravity</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">While it seems helpful, low gravity reduces soil consolidation, affecting foundation stability and altering material behavior...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>The Moon's low gravity affects both human mobility and the behavior of materials. It can lead to less consolidated soils and lower load-bearing capacities for foundations, necessitating specialized foundation designs and adapted construction techniques.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">📦</div>
+                        <h3 class="text-xl font-semibold">Earth-based Resupply</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">The immense cost and logistical complexity of transporting all necessary materials from Earth poses a significant barrier...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>Transporting materials from Earth to the Moon is incredibly expensive and logistically challenging. Every kilogram launched costs tens of thousands of dollars, making reliance on Earth-based resupply unsustainable for long-term lunar colonization. This drives the need for In-Situ Resource Utilization (ISRU).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New LLM Feature: Multidisciplinary Challenge Insights -->
+            <div class="bg-white p-6 rounded-lg shadow-lg mt-12 fade-in">
+                <h3 class="text-2xl font-bold text-center mb-6">✨ Multidisciplinary Challenge Insights ✨</h3>
+                <p class="max-w-3xl mx-auto text-zinc-600 text-center mb-6">Select a lunar challenge, and I'll describe how various disciplines contribute to overcoming it.</p>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <select id="challengeSelect" class="flex-grow p-3 border border-zinc-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select a Challenge</option>
+                        <option value="Extreme Temperatures">Extreme Temperatures</option>
+                        <option value="Ionizing Radiation">Ionizing Radiation</option>
+                        <option value="Abrasive Lunar Dust">Abrasive Lunar Dust</option>
+                        <option value="Hard Vacuum">Hard Vacuum</option>
+                        <option value="Low Gravity">Low Gravity</option>
+                        <option value="Earth-based Resupply">Earth-based Resupply</option>
+                    </select>
+                    <button id="generateChallengeInsightBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md shadow-lg transition-colors duration-300">Get Insights ✨</button>
+                </div>
+                <div id="challengeInsightOutput" class="bg-zinc-100 p-4 rounded-md min-h-[100px] text-zinc-700 overflow-auto">
+                    <p class="text-zinc-500">Insights will appear here.</p>
+                </div>
+                <div id="challengeInsightLoading" class="hidden text-center text-blue-500 mt-2">Generating...</div>
+            </div>
+        </section>
+
+        <!-- Section 2: The Resource -->
+        <section id="section-resource" class="content-section">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="text-3xl font-bold text-zinc-800 mb-2">Harnessing the Dust: Geotechnical Analysis</h2>
+                <p class="max-w-3xl mx-auto text-zinc-600">The key to lunar survival lies beneath our feet. Lunar regolith, the soil blanketing the Moon, is our primary local resource. Understanding its properties through geotechnical analysis is a multidisciplinary effort, combining geology, mechanics, and material science. Click on each portal to explore its characteristics and potential.</p>
+            </div>
+            <div class="flex flex-col space-y-6 fade-in"> <!-- Changed to flex-col for vertical stacking -->
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">🔬</div>
+                        <h3 class="text-xl font-semibold">Regolith Composition & Structure</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Lunar regolith is a poorly sorted sandy-silty soil with angular particles, glass spheroids, and aluminosilicate minerals...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>Lunar regolith is a loose, fragmented material formed from billions of years of impacts. It's typically a poorly sorted sandy-silty soil with angular particles, often containing crushable hollow glass spheroids and agglutinates. Its composition primarily consists of aluminosilicate materials (primarily silicon, aluminum, and calcium) making up over 80% of the material, and between 10% and 36% of these minerals existing in an amorphous state. The median particle size generally ranges from 0.04 to 0.130 mm, with an average of 0.07 mm.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">💪</div>
+                        <h3 class="text-xl font-semibold">Dry Regolith Mechanical Properties</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Dry lunar regolith exhibits both cohesive and frictional shear strength, and surprisingly, a measurable tensile strength...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>Unlike many terrestrial granular soils, dry lunar regolith shows both cohesive and frictional components in its shear strength, with electrostatic forces potentially contributing to cohesion. Experimental studies have demonstrated a substantial tensile strength, measured as low as 1 kPa. While lunar rocks can possess compressive and tensile strengths up to 10 times greater than Earth rocks, the regolith itself inherently exhibits low strength and lacks the cementitious minerals found in Earth-based soils.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">🧊</div>
+                        <h3 class="text-xl font-semibold">Permanently Shadowed Regions (PSRs)</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">These polar regions harbor significant water ice, critical for in-situ resource utilization and sustained human presence...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>Permanently Shadowed Regions (PSRs) are areas near the lunar poles that never receive direct sunlight. Due to their extreme cold and constant darkness, they act as cold traps, preserving significant quantities of water ice. Estimated concentrations range from 0.5% to 4.0% by weight, with some data suggesting up to 5.6 ± 2.9% by mass. These regions are critical for future lunar missions as the water ice can be processed into potable water, breathable air, and rocket propellant, enabling long-term self-sufficiency.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card" id="icy-regolith-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">❄️</div>
+                        <h3 class="text-xl font-semibold">Icy Regolith Strength (UCS & Brazilian)</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Tests reveal icy lunar soil behaves like ductile rock with soft to medium strengths, varying significantly with water content and cryogenic temperatures. Click to see how ice impacts strength.</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>Unconfined Compressive Strength (UCS) and Brazilian tensile strength tests on icy regolith simulants show that its strength increases nonlinearly with dry density and water content, reaching an "extreme strength value" when saturated. It behaves akin to ductile rock with soft to medium strengths, and its properties vary significantly with cryogenic temperatures, though further temperature drops below -180°C have diminishing influence. The impact of water ice on strength is highly dependent on specific conditions such as bulk density, temperature, and potentially the phase or distribution of the ice within the regolith matrix.</p>
+                        <div class="bg-white p-6 rounded-lg shadow-lg mt-6">
+                            <h3 class="text-xl font-semibold mb-1 text-center">The Impact of Ice on Regolith Strength</h3>
+                            <p class="text-zinc-600 text-center mb-4">The amount of water ice in regolith dramatically changes its mechanical properties, transforming it from loose soil into a rock-hard composite. This chart, based on punch penetration test findings, shows how its strength, and therefore the difficulty of excavation, increases with ice content. Click the bars to see the equivalent Earth material.</p>
+                            <div class="chart-container">
+                                <canvas id="regolithStrengthChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">⛏️</div>
+                        <h3 class="text-xl font-semibold">Excavation Difficulty & Punch Tests</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Punch penetration tests show excavation difficulty is highly sensitive to water content, ranging from "very easy" to requiring "massive excavators"...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>Punch penetration tests are crucial for characterizing excavatability. Regolith with minimal ice (up to 0.3%) is "very easy to excavate" (like weak coal). As ice content increases (e.g., 8.4% or 10.6%), it behaves like moderate to strong limestone or sandstone, requiring mechanical or massive excavators. Percussive penetrometers have proven effective for icy regolith where static cones fail, demonstrating their utility for prospecting and excavation in such challenging conditions.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-4xl">🚧</div>
+                        <h3 class="text-xl font-semibold">Settlement from Ice Extraction</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Extracting water ice from regolith can lead to significant settlement (over 3%) when initial water content exceeds 5%...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700">
+                        <p>A critical challenge for foundation stability is the potential for settlement after water ice is extracted from regolith. This process can create voids beneath the surface, which could destabilize structures or overturn rovers. Research indicates that significant settlement (greater than 3%) occurs when the initial water content of the regolith exceeds 5%, necessitating careful site planning in ice-rich regions.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: The Solution -->
+        <section id="section-solution" class="content-section">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="text-3xl font-bold text-zinc-800 mb-2">From Dust to Structures</h2>
+                <p class="max-w-3xl mx-auto text-zinc-600">In-Situ Resource Utilization (ISRU) is the strategy of living off the land. By developing advanced manufacturing and robotic systems, we can transform raw regolith into durable construction materials, creating everything from landing pads to habitats without relying on costly supplies from Earth.</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-12 fade-in">
+                <h3 class="text-xl font-semibold mb-4 text-center">Comparing Regolith-Based Construction Materials</h3>
+                <div class="flex justify-center border-b border-zinc-300 mb-6">
+                    <button class="tab-button py-2 px-4 -mb-px bg-zinc-200 rounded-t-md text-zinc-700" data-tab="geopolymer">Geopolymer</button>
+                    <button class="tab-button py-2 px-4 -mb-px bg-zinc-200 rounded-t-md text-zinc-700" data-tab="sulfur">Sulfur Concrete</button>
+                    <button class="tab-button py-2 px-4 -mb-px bg-zinc-200 rounded-t-md text-zinc-700" data-tab="sintering">Solar Sintering</button>
+                    <button class="tab-button py-2 px-4 -mb-px bg-zinc-200 rounded-t-md text-zinc-700" data-tab="bagging">Regolith Bagging</button>
+                </div>
+                
+                <div id="tab-geopolymer" class="tab-content">
+                    <h4 class="text-lg font-semibold">Geopolymer Concrete</h4>
+                    <p class="text-zinc-600 mb-4">A promising binder created by mixing regolith with alkali activators. It's like Earth cement but far more water-efficient.</p>
+                    <div class="w-full bg-zinc-200 rounded-full h-4 mb-2"><div class="bg-blue-500 h-4 rounded-full" style="width: 60%;"></div></div>
+                    <p class="text-sm font-semibold mb-4">Compressive Strength: 18-30 MPa</p>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div><strong class="text-green-600">Advantage:</strong> Uses local regolith and is highly water-efficient (98% of water is recyclable).</div>
+                        <div><strong class="text-red-600">Challenge:</strong> Requires alkali activators from Earth and its curing process is sensitive to the lunar vacuum.</div>
+                    </div>
+                </div>
+                <div id="tab-sulfur" class="tab-content">
+                    <h4 class="text-lg font-semibold">Sulfur Concrete</h4>
+                    <p class="text-zinc-600 mb-4">Uses abundant lunar sulfur as a binder. It sets quickly and has excellent initial strength.</p>
+                    <div class="w-full bg-zinc-200 rounded-full h-4 mb-2"><div class="bg-blue-500 h-4 rounded-full" style="width: 80%;"></div></div>
+                    <p class="text-sm font-semibold mb-4">Compressive Strength: ~35 MPa</p>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div><strong class="text-green-600">Advantage:</strong> High strength and uses a volatile element found on the Moon. No water needed.</div>
+                        <div><strong class="text-red-600">Challenge:</strong> Weakens dramatically under extreme temperature swings due to its low melting point.</div>
+                    </div>
+                </div>
+                <div id="tab-sintering" class="tab-content">
+                    <h4 class="text-lg font-semibold">Solar Sintering / Laser Transformation</h4>
+                    <p class="text-zinc-600 mb-4">Uses concentrated sunlight or lasers to melt regolith, fusing it into a solid, ceramic-like material.</p>
+                    <div class="w-full bg-zinc-200 rounded-full h-4 mb-2"><div class="bg-blue-500 h-4 rounded-full" style="width: 10%;"></div></div>
+                    <p class="text-sm font-semibold mb-4">Compressive Strength: ~2.5 MPa</p>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div><strong class="text-green-600">Advantage:</strong> Requires no binders from Earth, using only local regolith and solar energy.</div>
+                        <div><strong class="text-red-600">Challenge:</strong> Currently produces low-strength structures and is very energy-intensive.</div>
+                    </div>
+                </div>
+                <div id="tab-bagging" class="tab-content">
+                    <h4 class="text-lg font-semibold">Regolith Bagging</h4>
+                    <p class="text-zinc-600 mb-4">A simple, rapid construction method involving filling durable fabric bags with loose regolith.</p>
+                    <div class="w-full bg-zinc-200 rounded-full h-4 mb-2"><div class="bg-blue-500 h-4 rounded-full" style="width: 8%;"></div></div>
+                    <p class="text-sm font-semibold mb-4">Compressive Strength: 2-3 MPa</p>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div><strong class="text-green-600">Advantage:</strong> Fast, large-scale, and low-energy. Excellent for initial shelters and blast berms.</div>
+                        <div><strong class="text-red-600">Challenge:</strong> Limited structural complexity and requires transporting the fabric bags from Earth.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New LLM Feature: ISRU Process Deep Dive -->
+            <div class="bg-white p-6 rounded-lg shadow-lg mt-12 fade-in">
+                <h3 class="text-2xl font-bold text-center mb-6">✨ ISRU Process Deep Dive ✨</h3>
+                <p class="max-w-3xl mx-auto text-zinc-600 text-center mb-6">Select a regolith-based construction material, and I'll explain the multidisciplinary process behind its creation.</p>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <select id="isruProcessSelect" class="flex-grow p-3 border border-zinc-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select a Material</option>
+                        <option value="Geopolymer Concrete">Geopolymer Concrete</option>
+                        <option value="Sulfur Concrete">Sulfur Concrete</option>
+                        <option value="Solar Sintering / Laser Transformation">Solar Sintering / Laser Transformation</option>
+                        <option value="Regolith Bagging">Regolith Bagging</option>
+                    </select>
+                    <button id="generateIspuProcessBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md shadow-lg transition-colors duration-300">Explain Process ✨</button>
+                </div>
+                <div id="isruProcessOutput" class="bg-zinc-100 p-4 rounded-md min-h-[100px] text-zinc-700 overflow-auto">
+                    <p class="text-zinc-500">Process details will appear here.</p>
+                </div>
+                <div id="isruProcessLoading" class="hidden text-center text-blue-500 mt-2">Generating...</div>
+            </div>
+
+            <div class="fade-in">
+                <h3 class="text-2xl font-bold text-center mb-6">Autonomous Robotic Construction</h3>
+                <p class="max-w-3xl mx-auto text-zinc-600 text-center mb-6">Robotic systems are essential for building in the harsh lunar environment, minimizing human risk. Click on each portal to learn about key projects.</p>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-semibold">Chinese Super Mason (CSM)</h4>
+                            <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                        </div>
+                        <div class="portal-summary">
+                            <p class="text-zinc-600 line-clamp-2">An all-in-one robotic system that sinters regolith into bricks and then autonomously assembles them...</p>
+                        </div>
+                        <div class="portal-detail mt-4 text-zinc-700">
+                            <p>Developed by Huazhong University of Science and Technology (HUST), the CSM combines on-site prefabrication of regolith bricks and arch segments with multi-structural automated assembly processes. It features a 6-axis robotic manipulator and an automated sintering fabricator mounted on an autonomous limbed vehicle, designed for high efficiency and self-sufficiency in extreme lunar environments.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-semibold">NASA MMPACT Project</h4>
+                            <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                        </div>
+                        <div class="portal-summary">
+                            <p class="text-zinc-600 line-clamp-2">Focuses on large-scale 3D printing of infrastructure like habitats, landing pads, and roads using technologies...</p>
+                        </div>
+                        <div class="portal-detail mt-4 text-zinc-700">
+                            <p>The Moon to Mars Planetary Autonomous Construction Technology (MMPACT) project explores large-scale robotic 3D printing for critical infrastructure on the Moon and Mars. It leverages technologies like Laser Vitreous Material Transformation and microwave sintering to achieve 100% regolith-based construction, aiming to reduce launch mass, accelerate building times, and minimize personnel exposure to hazards.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: The Habitat -->
+        <section id="section-habitat" class="content-section">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="text-3xl font-bold text-zinc-800 mb-2">Designing Our Lunar Home</h2>
+                <p class="max-w-3xl mx-auto text-zinc-600">A lunar habitat is more than a building; it's a self-contained ecosystem. The design must be a fortress, providing a pressurized, breathable atmosphere while shielding occupants from the relentless hazards of the lunar environment. A hybrid, multi-layered approach is key to resilience. Click on each concept to learn more.</p>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-12 items-center fade-in">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-center">Multi-Layered Shielding</h3>
+                    <p class="text-zinc-600 text-center mb-6">The most effective strategy is to bury surface habitats under a thick blanket of regolith. This simple solution provides robust, multi-hazard protection.</p>
+                    <div class="space-y-2 text-center text-sm font-semibold">
+                        <div class="bg-gray-400 text-white py-3 rounded-t-lg">Space Environment (Radiation, Micrometeoroids, Temp. Extremes)</div>
+                        <div class="bg-yellow-700 text-white py-6">~3 meters of Regolith Overburden</div>
+                        <div class="bg-blue-500 text-white py-2">Integrated Shielding (e.g., Water, Polyethylene)</div>
+                        <div class="bg-zinc-600 text-white py-4">Habitat Structural Shell</div>
+                        <div class="bg-green-600 text-white py-3 rounded-b-lg">Pressurized Living Space</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Key Structural Concepts</h3>
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-lg shadow-md portal-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-semibold">Inflatable & Deployable</h4>
+                                <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                            </div>
+                            <div class="portal-summary">
+                                <p class="text-sm text-zinc-600 line-clamp-2">Lightweight and compact for transport, they expand to create large volumes. Must be covered with regolith...</p>
+                            </div>
+                            <div class="portal-detail mt-4 text-zinc-700">
+                                <p>These structures offer significant advantages due to their compact storage volume for launch and their ability to rapidly deploy on-site, enclosing large volumes with relatively lightweight materials. They require thick layers of regolith for protection against radiation and micrometeoroids.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md portal-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-semibold">Underground & Lava Tubes</h4>
+                                <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                            </div>
+                            <div class="portal-summary">
+                                <p class="text-sm text-zinc-600 line-clamp-2">Using natural caves or tunneling provides the best natural protection from all surface hazards and offers stable temperatures...</p>
+                            </div>
+                            <div class="portal-detail mt-4 text-zinc-700">
+                                <p>Constructing habitats within natural lava tubes or by tunneling beneath the lunar surface provides natural, substantial protection from cosmic rays, extreme temperatures, radiation, micrometeorites, and impact ejecta. This approach offers nearly constant internal temperatures, simplifying thermal management.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md portal-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-semibold">Modular & 3D Printed</h4>
+                                <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                            </div>
+                            <div class="portal-summary">
+                                <p class="text-sm text-zinc-600 line-clamp-2">Robotically constructed from local materials, these structures can be easily expanded and customized over time...</p>
+                            </div>
+                            <div class="portal-detail mt-4 text-zinc-700">
+                                <p>These structures are robotically constructed from local materials, allowing for easy expansion and customization over time. This approach enables the base to grow incrementally and facilitates repairs, offering flexibility for long-term lunar settlements.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Current Missions -->
+        <section id="section-missions" class="content-section">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="text-3xl font-bold text-zinc-800 mb-2">Pioneering the Lunar Frontier: Current Missions</h2>
+                <p class="max-w-3xl mx-auto text-zinc-600">The vision of lunar colonization is being actively pursued by space agencies and commercial entities worldwide. These ambitious programs are laying the groundwork for a permanent human presence, from robotic reconnaissance to crewed landings and infrastructure development. Click on each mission to explore their key endeavors.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 fade-in">
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-semibold">🇺🇸 NASA: Artemis Program</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">NASA's Artemis program aims to return humans to the Moon, establish a sustainable presence, and prepare for future missions to Mars...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700 space-y-3">
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Goal:</h4>
+                            <p>To establish a long-term human presence on the Moon for scientific discovery, technology advancement, and as a stepping stone for human missions to Mars.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Key Missions & Timeline:</h4>
+                            <ul class="list-disc list-inside ml-4 space-y-1">
+                                <li>Artemis I (2022): Successful uncrewed test flight of SLS rocket and Orion spacecraft around the Moon.</li>
+                                <li>Artemis II (early 2026): First crewed test flight of SLS and Orion around the Moon.</li>
+                                <li>Artemis III (mid-2027): Planned first human landing at the lunar South Pole since Apollo 17, utilizing SpaceX's Starship Human Landing System (HLS).</li>
+                                <li>Artemis IV (late 2028): Second crewed landing, involving docking with the Lunar Gateway station.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Partnerships:</h4>
+                            <p>Collaborates with commercial entities through the Commercial Lunar Payload Services (CLPS) initiative for robotic deliveries, and international partners including the European Space Agency (ESA) and the Canadian Space Agency (CSA).</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-semibold">🇨🇳 China: International Lunar Research Station (ILRS)</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">China, in collaboration with Russia, is leading the development of the International Lunar Research Station (ILRS) near the Moon's south pole...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700 space-y-3">
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Goal:</h4>
+                            <p>To establish a permanent, multi-functional lunar research station near the Moon's south pole, with potential for future Mars missions.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Key Programs & Timeline:</h4>
+                            <ul class="list-disc list-inside ml-4 space-y-1">
+                                <li>Chang'e Program: Ongoing robotic missions (e.g., Chang'e 5 & 6 for sample returns, Chang'e 7 planned for 2026 to search for water ice).</li>
+                                <li>ILRS Phases: Aims for a basic base by 2035, with extended capabilities and infrastructure development continuing until 2050.</li>
+                                <li>Manned Program: China aims for a crewed lunar landing before 2030, developing new heavy-lift rockets, manned spacecraft, and lunar landers (e.g., Long March-10, Mengzhou, Lanyue).</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Partnerships:</h4>
+                            <p>Jointly led with Russia, and actively seeking international collaboration, having partnered with 13 nations already, with a goal of 50 countries and 500 research institutions.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-semibold">🇪🇺 European Space Agency (ESA)</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">ESA plays a crucial role in international lunar exploration efforts, particularly through significant contributions to NASA's Artemis program...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700 space-y-3">
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Role & Contributions:</h4>
+                            <p>Focuses on sustainable lunar exploration and leveraging lunar resources through international partnerships.</p>
+                            <ul class="list-disc list-inside ml-4 space-y-1">
+                                <li>Artemis Program: Provides the European Service Module (ESM) for NASA's Orion spacecraft and is a key partner for the Lunar Gateway station (e.g., ESPRIT module).</li>
+                                <li>Scientific Missions: Involved in various lunar satellite programs for mapping, environmental studies, and resource identification.</li>
+                                <li>Technology Development: Pursues initiatives in robotics, ISRU, and advanced materials relevant to lunar settlement.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Future Goals:</h4>
+                            <p>To contribute to a long-term human presence on the Moon and facilitate future deep-space missions, emphasizing international cooperation and the development of key technologies.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-semibold">💰 Commercial Entities: Driving Innovation</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Private companies are increasingly vital to lunar exploration, bringing innovative solutions and accelerating the development of a lunar economy...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700 space-y-3">
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Impact:</h4>
+                            <p>Commercial entities are accelerating lunar development by providing launch services, landers, and developing new technologies, fostering a burgeoning lunar economy.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-1">Key Players & Initiatives:</h4>
+                            <ul class="list-disc list-inside ml-4 space-y-1">
+                                <li>NASA CLPS Initiative: Companies like Astrobotic, Intuitive Machines, and Firefly Aerospace provide robotic lunar payload delivery services, conducting science and technology demonstrations.</li>
+                                <li>SpaceX: Developing the Starship Human Landing System (HLS) for NASA's Artemis III mission, which is crucial for crewed landings.</li>
+                                <li>Interlune: An American startup exploring the mining of Helium-3 on the Moon for potential energy applications on Earth.</li>
+                                <li>ispace (Hakuto): A Japanese company developing lunar landers and rovers for commercial missions, aiming to provide transportation services to the Moon.</li>
+                                <li>Blue Origin: Developing the Blue Moon lunar lander and other space infrastructure.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Your Path to the Moon -->
+        <section id="section-path" class="content-section">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="text-3xl font-bold text-zinc-800 mb-2">Your Path to the Moon</h2>
+                <p class="max-w-3xl mx-auto text-zinc-600">Lunar exploration is a global endeavor, and individuals and nations worldwide are contributing to humanity's return to the Moon. Discover how Bangladesh is participating and the opportunities available for you to get involved.</p>
+            </div>
+            <div class="flex flex-col space-y-6 fade-in">
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-semibold">🇧🇩 Bangladesh and the Artemis Accords</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Bangladesh became the 54th nation to sign NASA's Artemis Accords, committing to peaceful and responsible space exploration...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700 space-y-3">
+                        <p>On April 8, 2025, Bangladesh officially became the 54th signatory of NASA's Artemis Accords. This non-binding agreement promotes principles for safe, peaceful, and transparent civil space exploration, particularly focusing on activities related to the Moon and Mars. By signing, Bangladesh aligns itself with global efforts to advance scientific discovery, protect space heritage, and responsibly utilize space resources.</p>
+                        <p>This commitment is expected to enhance Bangladesh's engagement with NASA and the international community, opening avenues for technology transfer, economic cooperation, and scientific collaboration. It also aims to accelerate Bangladesh's own space research activities, including enhancing its satellite program and future space initiatives.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-semibold">🚀 Bangladeshi Achievements in Space</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">Bangladeshi innovators have achieved global recognition in space challenges, showcasing their talent and ingenuity...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700 space-y-3">
+                        <p>Bangladeshi youth and innovators have consistently demonstrated their passion and talent in space exploration. Notably, Bangladeshi teams have been global champions in NASA's Space Apps Challenge four times in recent years, including three consecutive years.</p>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Team Olik (2018): Won in the "Best Use of Data" category for their Lunar VR project, allowing users to explore the Apollo 11 landing site.</li>
+                            <li>Team Mohakash (2021): Champions in the "Best Mission Concept" category with their ARSS project, focusing on regolith collection.</li>
+                            <li>Team Diamonds (2022): Won in the "Most Inspirational" category.</li>
+                            <li>Team Voyagers (2023): Clinched the "Best Storytelling" award.</li>
+                        </ul>
+                        <p>These achievements highlight the growing capabilities and potential of Bangladeshi scientists, engineers, and future astronauts in contributing to humanity's space endeavors.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md portal-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-semibold">🎓 Opportunities for Involvement</h3>
+                        <span class="portal-toggle-icon text-zinc-500 text-2xl">▼</span>
+                    </div>
+                    <div class="portal-summary">
+                        <p class="text-zinc-600 line-clamp-2">The Artemis Accords and ongoing collaborations create numerous opportunities for students and scientists...</p>
+                    </div>
+                    <div class="portal-detail mt-4 text-zinc-700 space-y-3">
+                        <p>Bangladesh's commitment to the Artemis Accords and its growing involvement in space research are opening new doors for its citizens:</p>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Collaboration: Bangladeshi universities and scientists will gain opportunities to collaborate with top global institutions on space research and innovation.</li>
+                            <li>Training & Exchange Programs: Students may benefit from NASA training programs, scholarships, and exchange initiatives, fostering a new generation of space scientists and engineers.</li>
+                            <li>Technical Assistance: Bangladesh's Space Research and Remote Sensing Organization (SPARRSO) can receive technical assistance to develop advanced Earth observation and climate monitoring satellites.</li>
+                            <li>Youth Engagement: Continued participation in challenges like NASA Space Apps Challenge inspires young minds to pursue careers in STEM fields related to space.</li>
+                        </ul>
+                        <p>These opportunities pave the way for Bangladesh to play an increasingly significant role in the global space community.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-6 mt-12 bg-zinc-200 text-zinc-500 text-sm">
+        <p>Interactive report generated based on "Regolith to Residences: The Engineering of Lunar Colonization".</p>
+        <p>A conceptual web application for information synthesis and exploration.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('.content-section');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const portalCards = document.querySelectorAll('.portal-card');
+
+            let regolithChart = null; // Keep this global to prevent re-initialization
+
+            function showSection(targetId) {
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.id === `nav-${targetId}`) {
+                        item.classList.add('active');
+                    }
+                });
+
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                    if (section.id === `section-${targetId}`) {
+                        section.classList.add('active');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            }
+
+            function showTab(targetId) {
+                tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.dataset.tab === targetId) {
+                        button.classList.add('active');
+                    }
+                });
+
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === `tab-${targetId}`) {
+                        content.classList.add('active');
+                    }
+                });
+            }
+
+            // Toggle portal details
+            portalCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const summary = this.querySelector('.portal-summary');
+                    const detail = this.querySelector('.portal-detail');
+                    const toggleIcon = this.querySelector('.portal-toggle-icon');
+
+                    if (summary && detail && toggleIcon) {
+                        const isIcyRegolithCard = this.id === 'icy-regolith-card';
+
+                        if (detail.classList.contains('active')) {
+                            // Close the portal
+                            detail.classList.remove('active');
+                            summary.classList.remove('hidden'); // Show summary again
+                            toggleIcon.classList.remove('rotated');
+                        } else {
+                            // Open the portal
+                            // Close any other open portals in the same section first for better UX
+                            this.closest('section').querySelectorAll('.portal-card').forEach(otherCard => {
+                                if (otherCard !== this) {
+                                    const otherDetail = otherCard.querySelector('.portal-detail');
+                                    const otherSummary = otherCard.querySelector('.portal-summary');
+                                    const otherToggleIcon = otherCard.querySelector('.portal-toggle-icon');
+                                    if (otherDetail && otherDetail.classList.contains('active')) {
+                                        otherDetail.classList.remove('active');
+                                        otherSummary.classList.remove('hidden');
+                                        otherToggleIcon.classList.remove('rotated');
+                                    }
+                                }
+                            });
+
+                            detail.classList.add('active');
+                            summary.classList.add('hidden'); // Hide summary
+                            toggleIcon.classList.add('rotated');
+
+                            // Render chart only if it's the icy regolith card and not already rendered
+                            if (isIcyRegolithCard && !regolithChart) {
+                                renderRegolithChart();
+                            }
+                        }
+                    }
+                });
+            });
+
+
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetId = item.id.replace('nav-', '');
+                    showSection(targetId);
+                });
+            });
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    showTab(button.dataset.tab);
+                });
+            });
+
+            function renderRegolithChart() {
+                const ctx = document.getElementById('regolithStrengthChart').getContext('2d');
+                const data = {
+                    labels: ['0.3% Ice', '1.5% Ice', '8.4% Ice', '10.6% Ice'],
+                    datasets: [{
+                        label: 'Relative Excavation Difficulty',
+                        data: [10, 25, 65, 90],
+                        backgroundColor: [
+                            'rgba(161, 98, 7, 0.6)',
+                            'rgba(100, 116, 139, 0.6)',
+                            'rgba(59, 130, 246, 0.6)',
+                            'rgba(29, 78, 216, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(161, 98, 7, 1)',
+                            'rgba(100, 116, 139, 1)',
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(29, 78, 216, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                };
+                const equivalentMaterials = {
+                    '0.3% Ice': 'Behaves like weak coal. Very easy to excavate.',
+                    '1.5% Ice': 'Behaves like weak shale. Readily excavatable.',
+                    '8.4% Ice': 'Behaves like moderate limestone. Requires mechanical excavators.',
+                    '10.6% Ice': 'Behaves like strong sandstone. Requires massive excavators.'
+                };
+
+                regolithChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Relative Strength / Excavation Difficulty'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Water Ice Content by Weight'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += context.parsed.y;
+                                        return label;
+                                    },
+                                    afterLabel: function(context) {
+                                        return equivalentMaterials[context.label];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Helper function to format LLM output
+            function formatLLMOutput(text) {
+                // Split by newline to get individual points
+                const lines = text.split('\n').filter(line => line.trim() !== '');
+                let formattedHtml = '';
+                let currentStepContent = [];
+                let stepCounter = 0;
+
+                const processAndAppendStep = () => {
+                    if (currentStepContent.length > 0) {
+                        const stepHeadingMatch = currentStepContent[0].match(/^(\d+\.\s*)(.*)/);
+                        if (stepHeadingMatch) {
+                            const stepNumber = stepHeadingMatch[1];
+                            const stepTitle = stepHeadingMatch[2].trim();
+                            formattedHtml += `<h4 class="step-heading">${stepNumber}${stepTitle}</h4>`;
+                            // Process the rest of the content for this step
+                            for (let i = 1; i < currentStepContent.length; i++) {
+                                let line = currentStepContent[i].trim();
+                                // Remove leading asterisks or hyphens if present
+                                line = line.replace(/^[*\-•]\s*/, '').trim();
+                                // Bold common discipline names
+                                line = line.replace(/\b(geotechnical engineering|materials science|robotics|life support|structural engineering|environmental science|chemical engineering|mining engineering|process engineering|geology|mechanics|mechanical engineering|electrical engineering|computer science|aerospace engineering|civil engineering|astronomy|physics|biology|chemistry|architecture)\b/gi, '<strong>$&</strong>');
+                                formattedHtml += `<p class="insight-text">${line}</p>`;
+                            }
+                        } else {
+                            // Fallback for content that doesn't match a step heading
+                            currentStepContent.forEach(line => {
+                                let cleanedLine = line.replace(/^[*\-•]\s*/, '').trim();
+                                cleanedLine = cleanedLine.replace(/\b(geotechnical engineering|materials science|robotics|life support|structural engineering|environmental science|chemical engineering|mining engineering|process engineering|geology|mechanics|mechanical engineering|electrical engineering|computer science|aerospace engineering|civil engineering|astronomy|physics|biology|chemistry|architecture)\b/gi, '<strong>$&</strong>');
+                                formattedHtml += `<p class="insight-text">${cleanedLine}</p>`;
+                            });
+                        }
+                    }
+                    currentStepContent = [];
+                };
+
+                lines.forEach(line => {
+                    // Check if the line starts with a number followed by a period and space
+                    if (line.match(/^\d+\.\s/)) {
+                        processAndAppendStep(); // Process previous step's content
+                        currentStepContent.push(line); // Start new step
+                    } else {
+                        currentStepContent.push(line); // Add to current step's content
+                    }
+                });
+                processAndAppendStep(); // Process the last step's content
+
+                return formattedHtml;
+            }
+
+            // LLM Integration for Multidisciplinary Challenge Insights
+            const challengeSelect = document.getElementById('challengeSelect');
+            const generateChallengeInsightBtn = document.getElementById('generateChallengeInsightBtn');
+            const challengeInsightOutput = document.getElementById('challengeInsightOutput');
+            const challengeInsightLoading = document.getElementById('challengeInsightLoading');
+
+            generateChallengeInsightBtn.addEventListener('click', async () => {
+                const selectedChallenge = challengeSelect.value;
+                if (!selectedChallenge) {
+                    challengeInsightOutput.innerHTML = '<p class="text-red-500">Please select a challenge.</p>';
+                    return;
+                }
+
+                challengeInsightOutput.innerHTML = '';
+                challengeInsightLoading.classList.remove('hidden');
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: `Explain how multidisciplinary work is essential to overcome the lunar challenge of "${selectedChallenge}". For each discipline, first mention the discipline name in bold, then describe its contribution in a concise sentence. Example: **Discipline Name**: Contribution description.` }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+                    }
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        challengeInsightOutput.innerHTML = formatLLMOutput(text);
+                    } else {
+                        challengeInsightOutput.innerHTML = '<p class="text-red-500">Failed to generate insights. Please try again.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error calling Gemini API for challenge insights:', error);
+                    challengeInsightOutput.innerHTML = `<p class="text-red-500">An error occurred while generating insights: ${error.message}. Please check your network connection or try again later.</p>`;
+                } finally {
+                    challengeInsightLoading.classList.add('hidden');
+                }
+            });
+
+            // LLM Integration for ISRU Process Deep Dive
+            const isruProcessSelect = document.getElementById('isruProcessSelect');
+            const generateIspuProcessBtn = document.getElementById('generateIspuProcessBtn');
+            const isruProcessOutput = document.getElementById('isruProcessOutput');
+            const isruProcessLoading = document.getElementById('isruProcessLoading');
+
+            generateIspuProcessBtn.addEventListener('click', async () => {
+                const selectedProcess = isruProcessSelect.value;
+                if (!selectedProcess) {
+                    isruProcessOutput.innerHTML = '<p class="text-red-500">Please select an ISRU material.</p>';
+                    return;
+                }
+
+                isruProcessOutput.innerHTML = '';
+                isruProcessLoading.classList.remove('hidden');
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: `Describe the multidisciplinary process of creating "${selectedProcess}" from lunar regolith. Outline the key steps and for each step, mention the scientific and engineering disciplines involved (e.g., chemical engineering, materials science, robotics, mining engineering, process engineering, geology, mechanical engineering, electrical engineering, computer science, aerospace engineering, civil engineering, astronomy, physics, biology, chemistry, architecture). Format as: 1. Step Title: Description. Then list contributions as bold discipline name: contribution.` }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+                    }
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        isruProcessOutput.innerHTML = formatLLMOutput(text);
+                    } else {
+                        isruProcessOutput.innerHTML = '<p class="text-red-500">Failed to generate process details. Please try again.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error calling Gemini API for ISRU process:', error);
+                    isruProcessOutput.innerHTML = `<p class="text-red-500">An error occurred while generating process details: ${error.message}. Please check your network connection or try again later.</p>`;
+                } finally {
+                    isruProcessLoading.classList.add('hidden');
+                }
+            });
+
+            // Initial state
+            showSection('challenge');
+            showTab('geopolymer');
+
+        });
+    </script>
+</body>
+</html>
